@@ -48,8 +48,8 @@ object Pi {
     def component(n: Int): Double = 2 * ((n + math.random()) / gridSize) - 1
 
     val hits = for {
-      i <- 0 to gridSize
-      j <- 0 to gridSize
+      i <- 0 until gridSize
+      j <- 0 until gridSize
     } yield {
       val x = component(i)
       val y = component(j)
