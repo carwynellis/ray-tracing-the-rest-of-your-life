@@ -4,11 +4,12 @@ import uk.carwynellis.raytracing.hitable.BoundingVolumeHierarchy
 
 object Render extends App {
 
+  // TODO - consider defining a scene class that combines the objects and camera in a single entity.
   val width = 1200
   val height = 800
-  val samples = 50
+  val samples = 100
 
-  val origin = Vec3(478, 278, -600)
+  val origin = Vec3(278, 278, -800)
   val target = Vec3(278, 278, 0)
 
   val time0 = 0.0
@@ -31,7 +32,7 @@ object Render extends App {
   println(s"Rendering scene to $filename")
 
   val bvh = BoundingVolumeHierarchy
-    .fromHitables(Scene.finalScene.hitables, time0, time1)
+    .fromHitables(Scene.cornellBox.hitables, time0, time1)
 
   val renderer = Renderer(camera, bvh, width, height, samples)
   val imageWriter = ImageWriter(width, height, filename)
