@@ -9,6 +9,9 @@ abstract class Material(val albedo: Texture) {
 
   def scatter(rayIn: Ray, record: HitRecord): Option[ScatterResult]
 
+  // TODO - make this abstract if all materials need to implement this. Also is 0.0 a sane default?
+  def scatterPdf(rayIn: Ray, record: HitRecord, scattered: Ray): Double = 0.0
+
   /**
     * Default emitted implementation that returns black.
     *
@@ -30,7 +33,13 @@ object Material {
 
 }
 
-case class ScatterResult(ray: Ray, attenuation: Vec3)
+case class ScatterResult(
+  ray: Ray,
+  attenuation: Vec3,
+  // TODO - remove these defaults - just here to get up and running with the scatter changes in the book
+  scatteredRay: Ray = Ray(Vec3(0, 0, 0), Vec3(0, 0, 0), 0.0),
+  pdf: Double = 0.0
+)
 
 
 

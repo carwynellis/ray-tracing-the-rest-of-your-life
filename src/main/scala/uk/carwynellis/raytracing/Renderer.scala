@@ -28,8 +28,8 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
       case Some(hit) =>
         val emitted = hit.material.emitted(hit.u, hit.v, hit.p)
         hit.material.scatter(r, hit) match {
-          case Some(ScatterResult(scattered, attenuation)) if depth < MaximumRecursionDepth =>
-            emitted + (attenuation * color(scattered, world, depth + 1))
+          case Some(ScatterResult(ray, attenuation, scatteredRay, pdf)) if depth < MaximumRecursionDepth =>
+            emitted + ((attenuation * hit.material.scatterPdf(ray, hit, scatteredRay) *  color(scatteredRay, world, depth + 1)) / pdf)
           case _ =>
             emitted
         }
