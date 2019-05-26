@@ -7,7 +7,7 @@ import uk.carwynellis.raytracing.{HitRecord, Ray}
 class Metal(albedo: Texture, fuzziness: Double) extends Material(albedo) {
   override def scatter(rayIn: Ray, record: HitRecord): Option[ScatterResult] = {
     val reflected = Material.reflect(rayIn.direction.unitVector, record.normal)
-    Some(ScatterResult(Ray(record.p, reflected + (fuzziness * Sphere.randomPointInUnitSphere()), rayIn.time), albedo.value(0, 0, record.p)))
+    Some(ScatterResult(Ray(record.p, reflected + (fuzziness * Sphere.randomPointOnUnitSphere()), rayIn.time), albedo.value(0, 0, record.p)))
   }
 }
 

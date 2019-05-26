@@ -7,7 +7,7 @@ import uk.carwynellis.raytracing.{HitRecord, Ray}
 case class IsoTropic(override val albedo: Texture) extends Material(albedo) {
 
   override def scatter(rayIn: Ray, record: HitRecord): Option[ScatterResult] = {
-    val scattered = Ray(record.p, Sphere.randomPointInUnitSphere())
+    val scattered = Ray(record.p, Sphere.randomPointOnUnitSphere())
     val attenuation = albedo.value(record.u, record.v, record.p)
     Some(ScatterResult(scattered, attenuation))
   }

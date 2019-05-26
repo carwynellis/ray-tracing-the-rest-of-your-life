@@ -24,14 +24,14 @@ object Sphere {
   def apply(centre: Vec3, radius: Double, material: Material) = new Sphere(centre, radius, material)
 
   @tailrec
-  def randomPointInUnitSphere(): Vec3 = {
+  def randomPointOnUnitSphere(): Vec3 = {
     val randomPoint = (2.0 * Vec3(
       x = Random.double,
       y = Random.double,
       z = Random.double
     )) - Vec3(1, 1, 1)
-    if (randomPoint.squaredLength >= 1) randomPointInUnitSphere()
-    else randomPoint
+    if (randomPoint.squaredLength >= 1) randomPointOnUnitSphere()
+    else randomPoint.unitVector
   }
 
   /**
