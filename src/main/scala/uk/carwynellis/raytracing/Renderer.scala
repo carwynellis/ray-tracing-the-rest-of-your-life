@@ -28,8 +28,8 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
       case Some(hit) =>
         val emitted = hit.material.emitted(hit.u, hit.v, hit.p)
         hit.material.scatter(r, hit) match {
-          case Some(ScatterResult(ray, attenuation, scatteredRay, pdf)) if depth < MaximumRecursionDepth =>
-            emitted + ((attenuation * hit.material.scatterPdf(ray, hit, scatteredRay) *  color(scatteredRay, world, depth + 1)) / pdf)
+          case Some(ScatterResult(_, attenuation, scatteredRay, pdf)) if depth < MaximumRecursionDepth =>
+            emitted + ((attenuation * hit.material.scatterPdf(r, hit, scatteredRay) *  color(scatteredRay, world, depth + 1)) / pdf)
           case _ =>
             emitted
         }
@@ -89,6 +89,9 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
 
   // Basic progress indication, updated for each horizontal line of the image.
   // Added rather crude remaining time estimation which needs work.
+  // TODO - this is scanline based so suffers when we encounter a more complex part of the scene. Consider rendering a
+  //        whole scene sample and using this for the basis of parallelisation and estimation - should yield more
+  //        accurate estimates.
   private def showProgress(hPos: Int, start: Long): Unit = {
     val durationSeconds = (System.currentTimeMillis() - start) / 1000
     val percentComplete = 100 - ((hPos.toDouble / height) * 100)
