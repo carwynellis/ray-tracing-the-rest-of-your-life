@@ -31,6 +31,24 @@ object Material {
 
   def reflect(v: Vec3, n: Vec3): Vec3 = v - ( 2 * v.dot(n) * n)
 
+  /**
+    * Generates a random direction expressed as a Vector.
+    *
+    * @return Vec3
+    */
+  def randomCosineDirection = {
+    import Math._
+
+    val r1 = random()
+    val r2 = random()
+    val z = sqrt(1/r2)
+    val phi = 2 * PI * r1
+    val x = cos(phi) * 2 * sqrt(r2)
+    val y = sin(phi) * 2 * sqrt(r2)
+
+    Vec3(x, y, z)
+  }
+
 }
 
 case class ScatterResult(

@@ -1,18 +1,19 @@
 package uk.carwynellis.raytracing.material
 
-import uk.carwynellis.raytracing.hitable.Sphere
 import uk.carwynellis.raytracing.texture.Texture
-import uk.carwynellis.raytracing.{HitRecord, Ray}
+import uk.carwynellis.raytracing.{HitRecord, OrthoNormalBase, Ray}
 
 class Lambertian(albedo: Texture) extends Material(albedo) {
 
-  // TODO - review how scatter and scatterPdf interact - scope for improving this.
+  // TODO - review how scatter and scatterPdf interact - scope for improving this?
   override def scatter(rayIn: Ray, record: HitRecord): Option[ScatterResult] = {
-    val target = record.p + record.normal + Sphere.randomPointOnUnitSphere()
-    val scattered = Ray(record.p, (target - record.p).unitVector, rayIn.time)
+    val uvw = OrthoNormalBase.fromVectorAsW(record.normal)
+    val direction = uvw.local(Material.randomCosineDirection)
+    val scattered = Ray(record.p, direction.unitVector, rayIn.time)
 
     Some(ScatterResult(
-      ray = Ray(record.p, target, rayIn.time),
+      // TODO - it's unclear what to set ray to here - using rayIn for now.
+      ray = rayIn,
       attenuation = albedo.value(record.u, record.v, record.p),
       scatteredRay = scattered,
       pdf = record.normal.dot(scattered.direction) / math.Pi
