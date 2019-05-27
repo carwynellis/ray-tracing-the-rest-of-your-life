@@ -8,7 +8,7 @@ import uk.carwynellis.raytracing.material.ScatterResult
 class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples: Int) {
 
   // When rendering some rays may may include a floating point error preventing them from being treated as 0.
-  // We increase the minimum value we accept slight which yields a smoother image without visible noise.
+  // We increase the minimum value we accept slightly which yields a smoother image without visible noise.
   val ImageSmoothingLimit = 0.001
 
   val BlackBackground = Vec3(0, 0, 0)
@@ -29,9 +29,29 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
         val emitted = hit.material.emitted(hit.u, hit.v, hit.p)
         hit.material.scatter(r, hit) match {
           case Some(ScatterResult(_, attenuation, scatteredRay, pdf)) if depth < MaximumRecursionDepth =>
-            emitted + ((attenuation * hit.material.scatterPdf(r, hit, scatteredRay) *  color(scatteredRay, world, depth + 1)) / pdf)
-          case _ =>
-            emitted
+            // TODO - hardcoded values to validate calculations around sampling lights directly (Chapter 7)
+            val onLight = Vec3(
+              x = 213 + (Math.random() * (343-213)),
+              y = 554,
+              z = 227 + (math.random() * (332 - 227)),
+            )
+            val toLight = onLight - hit.p
+            val distanceSquared = toLight.squaredLength
+            val toLightUnit = toLight.unitVector
+
+            if (toLightUnit.dot(hit.normal) < 0) emitted
+            else {
+              val lightArea = (343-213)*(332-227)
+              val lightCosine = Math.abs(toLightUnit.y)
+              if (lightCosine < 0.000001) emitted
+              else {
+                val pdf = distanceSquared / (lightCosine * lightArea)
+                val scattered = Ray(hit.p, toLightUnit, r.time)
+
+                emitted + attenuation * hit.material.scatterPdf(r, hit, scattered) * color(scattered, world, depth + 1) / pdf
+              }
+            }
+          case _ => emitted
         }
       // If the ray hits nothing draw return black.
       case None => BlackBackground
