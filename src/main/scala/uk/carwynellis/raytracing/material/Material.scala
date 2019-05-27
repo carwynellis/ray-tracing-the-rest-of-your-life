@@ -17,12 +17,14 @@ abstract class Material(val albedo: Texture) {
     *
     * This can be overridden to define materials that are light sources.
     *
+    * @param rayIn
+    * @param record
     * @param u
     * @param v
     * @param p
     * @return
     */
-  def emitted(u: Double, v: Double, p: Vec3): Vec3 = Black
+  def emitted(rayIn: Ray, record: HitRecord, u: Double, v: Double, p: Vec3): Vec3 = Black
 
   def computeTextureCoordinates = albedo.requiresTextureCoordinates
 }

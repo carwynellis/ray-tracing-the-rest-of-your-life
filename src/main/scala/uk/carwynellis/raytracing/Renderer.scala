@@ -26,7 +26,7 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
   def color(r: Ray, world: Hitable, depth: Int): Vec3 = {
     world.hit(r, ImageSmoothingLimit, Double.MaxValue) match {
       case Some(hit) =>
-        val emitted = hit.material.emitted(hit.u, hit.v, hit.p)
+        val emitted = hit.material.emitted(r, hit, hit.u, hit.v, hit.p)
         hit.material.scatter(r, hit) match {
           case Some(ScatterResult(_, attenuation, scatteredRay, pdf)) if depth < MaximumRecursionDepth =>
             // TODO - hardcoded values to validate calculations around sampling lights directly (Chapter 7)
