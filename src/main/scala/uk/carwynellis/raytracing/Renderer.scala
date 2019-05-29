@@ -4,6 +4,7 @@ import java.time.Duration
 
 import uk.carwynellis.raytracing.hitable.Hitable
 import uk.carwynellis.raytracing.material.ScatterResult
+import uk.carwynellis.raytracing.pdf.CosinePdf
 
 class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples: Int) {
 
@@ -28,29 +29,11 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
       case Some(hit) =>
         val emitted = hit.material.emitted(r, hit, hit.u, hit.v, hit.p)
         hit.material.scatter(r, hit) match {
-          case Some(ScatterResult(_, attenuation, scatteredRay, pdf)) if depth < MaximumRecursionDepth =>
-            // TODO - hardcoded values to validate calculations around sampling lights directly (Chapter 7)
-            val onLight = Vec3(
-              x = 213 + (Math.random() * (343-213)),
-              y = 554,
-              z = 227 + (math.random() * (332 - 227)),
-            )
-            val toLight = onLight - hit.p
-            val distanceSquared = toLight.squaredLength
-            val toLightUnit = toLight.unitVector
-
-            if (toLightUnit.dot(hit.normal) < 0) emitted
-            else {
-              val lightArea = (343-213)*(332-227)
-              val lightCosine = Math.abs(toLightUnit.y)
-              if (lightCosine < 0.000001) emitted
-              else {
-                val pdf = distanceSquared / (lightCosine * lightArea)
-                val scattered = Ray(hit.p, toLightUnit, r.time)
-
-                emitted + attenuation * hit.material.scatterPdf(r, hit, scattered) * color(scattered, world, depth + 1) / pdf
-              }
-            }
+          case Some(ScatterResult(_, attenuation, scatteredRay, p)) if depth < MaximumRecursionDepth =>
+            val pdf = CosinePdf(hit.normal)
+            val scattered = Ray(hit.p, pdf.generate, r.time)
+            val pdfValue = pdf.value(scattered.direction)
+            emitted + attenuation * hit.material.scatterPdf(r, hit, scattered) * color(scattered, world, depth + 1) / pdfValue
           case _ => emitted
         }
       // If the ray hits nothing draw return black.

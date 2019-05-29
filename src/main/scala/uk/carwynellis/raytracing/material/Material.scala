@@ -38,6 +38,7 @@ object Material {
     *
     * @return Vec3
     */
+  // TODO - consider relocating this since it's also used by CosinePdf
   def randomCosineDirection = {
     import Math._
 
