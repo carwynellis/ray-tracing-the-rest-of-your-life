@@ -4,7 +4,7 @@ import java.time.Duration
 
 import uk.carwynellis.raytracing.hitable.{Hitable, XZRectangle}
 import uk.carwynellis.raytracing.material.{Lambertian, ScatterResult}
-import uk.carwynellis.raytracing.pdf.{CosinePdf, HitablePdf}
+import uk.carwynellis.raytracing.pdf.{CombinedPdf, CosinePdf, HitablePdf}
 import uk.carwynellis.raytracing.texture.ConstantTexture
 
 class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples: Int) {
@@ -32,7 +32,7 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
         hit.material.scatter(r, hit) match {
           case Some(ScatterResult(_, attenuation, scatteredRay, p)) if depth < MaximumRecursionDepth =>
             val lightShape = XZRectangle(213, 343, 227, 332, 554, Lambertian(ConstantTexture(Vec3(0, 0, 0))))
-            val pdf = HitablePdf(lightShape, hit.p)
+            val pdf = CombinedPdf(HitablePdf(lightShape, hit.p), CosinePdf(hit.normal))
             val scattered = Ray(hit.p, pdf.generate, r.time)
             val pdfValue = pdf.value(scattered.direction)
             emitted + attenuation * hit.material.scatterPdf(r, hit, scattered) * color(scattered, world, depth + 1) / pdfValue
