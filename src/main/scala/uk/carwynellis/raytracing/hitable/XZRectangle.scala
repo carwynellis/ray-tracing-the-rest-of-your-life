@@ -33,6 +33,24 @@ class XZRectangle(val x0: Double,
     max = Vec3(x1, k + 0.0001, z1)
   ))
 
+  override def pdfValue(o: Vec3, v: Vec3): Double = {
+    hit(Ray(o, v), 0.001, Double.MaxValue).map { h =>
+      val area = (x1 - x0) * (z1 - z0)
+      val distanceSquared = h.t * h.t * v.squaredLength
+      val cosine = math.abs(v.dot(h.normal) / v.length)
+      distanceSquared / (cosine * area)
+    }.getOrElse(0)
+  }
+
+  override def random(o: Vec3): Vec3 = {
+    val randomPoint = Vec3(
+      x = x0 + math.random() * (x1-x0),
+      y = k,
+      z = z0 + math.random() * (z1-z0),
+    )
+
+    randomPoint - o
+  }
 }
 
 
