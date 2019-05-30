@@ -11,7 +11,7 @@ class Metal(albedo: Texture, fuzziness: Double) extends Material(albedo) {
       specularRay = Ray(record.p, reflected + (fuzziness * Sphere.randomPointOnUnitSphere())),
       isSpecular = true,
       attenuation = albedo.value(0, 0, record.p),
-      pdf = None,
+      pdf = None, // TODO - does a specular ray always mean no PDF?
     ))
   }
 }

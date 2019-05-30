@@ -37,15 +37,14 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
       case Some(hit) =>
         val emitted = hit.material.emitted(r, hit, hit.u, hit.v, hit.p)
         hit.material.scatter(r, hit) match {
+          case Some(ScatterRecord(ray, true, attenuation, None)) if depth < MaximumRecursionDepth =>
+            attenuation * color(ray, world, lightShape, depth + 1)
           case Some(ScatterRecord(ray, isSpecular, attenuation, Some(pdf))) if depth < MaximumRecursionDepth =>
-            if (isSpecular) attenuation * color(ray, world, lightShape, depth + 1)
-            else {
-              val lightPdf = HitablePdf(lightShape, hit.p)
-              val combinedPdf = CombinedPdf(lightPdf, pdf)
-              val scattered = Ray(hit.p, combinedPdf.generate, r.time)
-              val pdfValue = combinedPdf.value(scattered.direction)
-              emitted + attenuation * hit.material.scatteringPdf(r, hit, scattered) * color(scattered, world, lightShape, depth + 1) / pdfValue
-            }
+            val lightPdf = HitablePdf(lightShape, hit.p)
+            val combinedPdf = CombinedPdf(lightPdf, pdf)
+            val scattered = Ray(hit.p, combinedPdf.generate, r.time)
+            val pdfValue = combinedPdf.value(scattered.direction)
+            emitted + attenuation * hit.material.scatteringPdf(r, hit, scattered) * color(scattered, world, lightShape, depth + 1) / pdfValue
           case _ => emitted
         }
       // If the ray hits nothing draw return black.
