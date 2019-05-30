@@ -3,8 +3,8 @@ package uk.carwynellis.raytracing
 import java.time.Duration
 
 import uk.carwynellis.raytracing.hitable.{Hitable, XZRectangle}
-import uk.carwynellis.raytracing.material.{Lambertian, ScatterResult}
-import uk.carwynellis.raytracing.pdf.{CombinedPdf, CosinePdf, HitablePdf}
+import uk.carwynellis.raytracing.material.{Lambertian, ScatterRecord}
+import uk.carwynellis.raytracing.pdf.{CombinedPdf, HitablePdf}
 import uk.carwynellis.raytracing.texture.ConstantTexture
 
 class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples: Int) {
@@ -22,20 +22,30 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
     *
     * @param r
     * @param world
+    * @param lightShape
     * @param depth
     * @return
     */
-  def color(r: Ray, world: Hitable, depth: Int): Vec3 = {
+  def color(
+    r: Ray,
+    world: Hitable,
+    // TODO - this is a horrible hack to just get the cornell box working - need to revisit how scenes are defined
+    lightShape: Hitable = XZRectangle(213, 343, 227, 332, 554, Lambertian(ConstantTexture(Vec3(0, 0, 0)))),
+    depth: Int
+  ): Vec3 = {
     world.hit(r, ImageSmoothingLimit, Double.MaxValue) match {
       case Some(hit) =>
         val emitted = hit.material.emitted(r, hit, hit.u, hit.v, hit.p)
         hit.material.scatter(r, hit) match {
-          case Some(ScatterResult(_, attenuation, scatteredRay, p)) if depth < MaximumRecursionDepth =>
-            val lightShape = XZRectangle(213, 343, 227, 332, 554, Lambertian(ConstantTexture(Vec3(0, 0, 0))))
-            val pdf = CombinedPdf(HitablePdf(lightShape, hit.p), CosinePdf(hit.normal))
-            val scattered = Ray(hit.p, pdf.generate, r.time)
-            val pdfValue = pdf.value(scattered.direction)
-            emitted + attenuation * hit.material.scatterPdf(r, hit, scattered) * color(scattered, world, depth + 1) / pdfValue
+          case Some(ScatterRecord(ray, isSpecular, attenuation, Some(pdf))) if depth < MaximumRecursionDepth =>
+            if (isSpecular) attenuation * color(ray, world, lightShape, depth + 1)
+            else {
+              val lightPdf = HitablePdf(lightShape, hit.p)
+              val combinedPdf = CombinedPdf(lightPdf, pdf)
+              val scattered = Ray(hit.p, combinedPdf.generate, r.time)
+              val pdfValue = combinedPdf.value(scattered.direction)
+              emitted + attenuation * hit.material.scatteringPdf(r, hit, scattered) * color(scattered, world, lightShape, depth + 1) / pdfValue
+            }
           case _ => emitted
         }
       // If the ray hits nothing draw return black.
@@ -57,7 +67,7 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
       val xR = (x.toDouble + Random.double) / width.toDouble
       val yR = (y.toDouble + Random.double) / height.toDouble
       val ray = camera.getRay(xR, yR)
-      color(ray, scene, 0)
+      color(r = ray, world = scene, depth = 0)
     }.reduce(_ + _) / samples
     result.toPixel
   }

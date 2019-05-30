@@ -1,16 +1,17 @@
 package uk.carwynellis.raytracing.material
 
 import uk.carwynellis.raytracing._
+import uk.carwynellis.raytracing.pdf.Pdf
 import uk.carwynellis.raytracing.texture.Texture
 
 abstract class Material(val albedo: Texture) {
 
   private val Black = Vec3(0, 0, 0)
 
-  def scatter(rayIn: Ray, record: HitRecord): Option[ScatterResult]
+  def scatter(rayIn: Ray, record: HitRecord): Option[ScatterRecord]
 
   // TODO - make this abstract if all materials need to implement this. Also is 0.0 a sane default?
-  def scatterPdf(rayIn: Ray, record: HitRecord, scattered: Ray): Double = 0.0
+  def scatteringPdf(rayIn: Ray, record: HitRecord, scattered: Ray): Double = 0.0
 
   /**
     * Default emitted implementation that returns black.
@@ -62,5 +63,10 @@ case class ScatterResult(
   pdf: Double = 0.0
 )
 
-
+case class ScatterRecord(
+  specularRay: Ray,
+  isSpecular: Boolean,
+  attenuation: Vec3,
+  pdf: Option[Pdf]
+)
 
