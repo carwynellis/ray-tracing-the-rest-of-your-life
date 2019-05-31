@@ -58,7 +58,7 @@ object Scene {
       XZRectangle(0, 555, 0, 555, 555, white).flipNormals,
       XZRectangle(0, 555, 0, 555, 0, white),
       XYRectangle(0, 555, 0, 555, 555, white).flipNormals,
-      Translate(RotateY(Box(Vec3(0, 0, 0), Vec3(165, 165, 165), white), -18), Vec3(130, 0, 65)),
+      Sphere(Vec3(190, 90, 190), 90, Dielectric(1.5)),
       Translate(RotateY(Box(Vec3(0, 0, 0), Vec3(165, 330, 165), aluminium), 15), Vec3(265, 0, 295)),
     ))
   }

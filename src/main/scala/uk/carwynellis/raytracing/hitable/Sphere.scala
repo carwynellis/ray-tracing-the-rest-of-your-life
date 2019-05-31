@@ -18,6 +18,30 @@ class Sphere(val centre: Vec3, val radius: Double, val material: Material) exten
     ))
   }
 
+  override def pdfValue(o: Vec3, v: Vec3): Double = hit(Ray(o, v), 0.001, Double.MaxValue).map { h =>
+    val cosThetaMax = math.sqrt(1 - radius * radius / (centre - o).squaredLength)
+    val solidAngle = 2 * math.Pi * ( 1 - cosThetaMax)
+    1 / solidAngle
+  }.getOrElse(0)
+
+  override def random(o: Vec3): Vec3 = {
+    val direction = centre - o
+    val distanceSquared = direction.squaredLength
+    val uvw = OrthoNormalBase.fromVectorAsW(direction)
+    uvw.local(randomToSphere(radius, distanceSquared))
+  }
+
+  private def randomToSphere(r: Double, d: Double) = {
+    val r1 = math.random()
+    val r2 = math.random()
+    val z = 1 + r2 * (math.sqrt(1 - r * r / d) - 1)
+    val phi = 2 * math.Pi * r1
+    val s = math.sqrt(1 - z * z)
+    val x = math.cos(phi) * s
+    val y = math.sin(phi) * s
+    Vec3(x, y, z)
+  }
+
 }
 
 object Sphere {

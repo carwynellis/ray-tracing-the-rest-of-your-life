@@ -2,8 +2,8 @@ package uk.carwynellis.raytracing
 
 import java.time.Duration
 
-import uk.carwynellis.raytracing.hitable.{Hitable, XZRectangle}
-import uk.carwynellis.raytracing.material.{Lambertian, ScatterRecord}
+import uk.carwynellis.raytracing.hitable.{Hitable, Sphere, XZRectangle}
+import uk.carwynellis.raytracing.material.{Dielectric, Lambertian, ScatterRecord}
 import uk.carwynellis.raytracing.pdf.{CombinedPdf, HitablePdf}
 import uk.carwynellis.raytracing.texture.ConstantTexture
 
@@ -16,6 +16,12 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
   val BlackBackground = Vec3(0, 0, 0)
 
   val MaximumRecursionDepth = 50
+
+
+  // TODO - these are defined here temporarily so we can sample a given shape
+  //      - needs a refactor to allow this to be passed in
+  val CornellLightShape = XZRectangle(213, 343, 227, 332, 554, Lambertian(ConstantTexture(Vec3(0, 0, 0))))
+  val CornellSphere = Sphere(Vec3(190, 90, 190), 90, Dielectric(1.5))
 
   /**
     * Compute the color for a given ray.
@@ -30,7 +36,7 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
     r: Ray,
     world: Hitable,
     // TODO - this is a horrible hack to just get the cornell box working - need to revisit how scenes are defined
-    lightShape: Hitable = XZRectangle(213, 343, 227, 332, 554, Lambertian(ConstantTexture(Vec3(0, 0, 0)))),
+    lightShape: Hitable = CornellLightShape,
     depth: Int
   ): Vec3 = {
     world.hit(r, ImageSmoothingLimit, Double.MaxValue) match {
@@ -61,12 +67,13 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
     * @param y
     * @return
     */
+  // TODO - needs a refactor - this has been changed to allow the sphere to be sampled directly.
   def renderPixel(x: Int, y: Int): Pixel = {
     val result = (0 until samples).map { _ =>
       val xR = (x.toDouble + Random.double) / width.toDouble
       val yR = (y.toDouble + Random.double) / height.toDouble
       val ray = camera.getRay(xR, yR)
-      color(r = ray, world = scene, depth = 0)
+      color(r = ray, world = scene, depth = 0, lightShape = CornellSphere)
     }.reduce(_ + _) / samples
     result.toPixel
   }
