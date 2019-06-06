@@ -26,7 +26,7 @@ case class Dielectric(refractiveIndex: Double) extends Material(ConstantTexture(
     Some(ScatterRecord(
       specularRay = rayOut,
       attenuation = albedo.value(0, 0, record.p),
-      isSpecular = false,
+      isSpecular = true,
       pdf = None
     ))
   }
