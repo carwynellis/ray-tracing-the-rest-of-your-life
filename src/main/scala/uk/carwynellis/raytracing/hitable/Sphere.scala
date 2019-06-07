@@ -18,9 +18,9 @@ class Sphere(val centre: Vec3, val radius: Double, val material: Material) exten
     ))
   }
 
-  override def pdfValue(o: Vec3, v: Vec3): Double = hit(Ray(o, v), 0.001, Double.MaxValue).map { h =>
+  override def pdfValue(o: Vec3, v: Vec3): Double = hit(Ray(o, v), 0.001, Double.MaxValue).map { _ =>
     val cosThetaMax = math.sqrt(1 - radius * radius / (centre - o).squaredLength)
-    val solidAngle = 2 * math.Pi * ( 1 - cosThetaMax)
+    val solidAngle = 2 * math.Pi * (1 - cosThetaMax)
     1 / solidAngle
   }.getOrElse(0)
 

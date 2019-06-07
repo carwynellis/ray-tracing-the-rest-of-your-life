@@ -49,7 +49,6 @@ object Scene {
     val white = Lambertian(ConstantTexture(Vec3(0.73, 0.73, 0.73)))
     val green = Lambertian(ConstantTexture(Vec3(0.12, 0.45, 0.15)))
     val light = DiffuseLight(ConstantTexture(Vec3(15, 15, 15)))
-    val aluminium = Metal(ConstantTexture(Vec3(0.8, 0.85, 0.88)), 0.0)
 
     HitableList(List(
       YZRectangle(0, 555, 0, 555, 555, green).flipNormals,
@@ -59,7 +58,7 @@ object Scene {
       XZRectangle(0, 555, 0, 555, 0, white),
       XYRectangle(0, 555, 0, 555, 555, white).flipNormals,
       Sphere(Vec3(190, 90, 190), 90, Dielectric(1.5)),
-      Translate(RotateY(Box(Vec3(0, 0, 0), Vec3(165, 330, 165), aluminium), 15), Vec3(265, 0, 295)),
+      Translate(RotateY(Box(Vec3(0, 0, 0), Vec3(165, 330, 165), white), 15), Vec3(265, 0, 295)),
     ))
   }
 

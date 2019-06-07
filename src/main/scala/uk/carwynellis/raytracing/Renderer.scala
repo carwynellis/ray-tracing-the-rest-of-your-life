@@ -2,7 +2,7 @@ package uk.carwynellis.raytracing
 
 import java.time.Duration
 
-import uk.carwynellis.raytracing.hitable.{Hitable, Sphere, XZRectangle}
+import uk.carwynellis.raytracing.hitable.{Hitable, HitableList, Sphere, XZRectangle}
 import uk.carwynellis.raytracing.material.{Dielectric, Lambertian, ScatterRecord}
 import uk.carwynellis.raytracing.pdf.{CombinedPdf, HitablePdf}
 import uk.carwynellis.raytracing.texture.ConstantTexture
@@ -17,11 +17,11 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
 
   val MaximumRecursionDepth = 50
 
-
   // TODO - these are defined here temporarily so we can sample a given shape
   //      - needs a refactor to allow this to be passed in
   val CornellLightShape = XZRectangle(213, 343, 227, 332, 554, Lambertian(ConstantTexture(Vec3(0, 0, 0))))
-  val CornellSphere = Sphere(Vec3(190, 90, 190), 90, Dielectric(1.5))
+  val CornellSphere = Sphere(Vec3(190, 90, 190), 90, Lambertian(ConstantTexture(Vec3(0, 0, 0))))
+  val CornellLights = HitableList(List(CornellLightShape, CornellSphere))
 
   /**
     * Compute the color for a given ray.
@@ -73,7 +73,7 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
       val xR = (x.toDouble + Random.double) / width.toDouble
       val yR = (y.toDouble + Random.double) / height.toDouble
       val ray = camera.getRay(xR, yR)
-      color(r = ray, world = scene, depth = 0, lightShape = CornellSphere)
+      color(r = ray, world = scene, depth = 0, lightShape = CornellLights)
     }.reduce(_ + _) / samples
     result.toPixel
   }

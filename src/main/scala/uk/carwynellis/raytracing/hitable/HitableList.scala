@@ -1,10 +1,13 @@
 package uk.carwynellis.raytracing.hitable
 
-import uk.carwynellis.raytracing.{AxisAlignedBoundingBox, HitRecord, Ray}
+import uk.carwynellis.raytracing.{AxisAlignedBoundingBox, HitRecord, Ray, Vec3}
 
 import scala.annotation.tailrec
 
 class HitableList(val hitables: List[Hitable]) extends Hitable {
+
+  private val hitableCount = hitables.size
+  private val indexedHitables = hitables.toIndexedSeq // TODO - change hitables to indexedSeq instead?
 
   override def hit(r: Ray, tMin: Double, tMax: Double): Option[HitRecord] = {
 
@@ -40,6 +43,13 @@ class HitableList(val hitables: List[Hitable]) extends Hitable {
     val firstBoundingBox = hitables.headOption.flatMap(_.boundingBox(t0, t1))
 
     loop(firstBoundingBox, hitables.tail)
+  }
+
+  override def pdfValue(o: Vec3, v: Vec3): Double = hitables.map(_.pdfValue(o, v)).sum / hitableCount
+
+  override def random(o: Vec3): Vec3 = {
+    val index = (math.random() * hitableCount).toInt
+    indexedHitables(index).random(o)
   }
 
 }

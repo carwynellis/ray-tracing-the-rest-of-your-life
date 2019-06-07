@@ -7,7 +7,7 @@ object Render extends App {
   // TODO - consider defining a scene class that combines the objects and camera in a single entity.
   val width = 1200
   val height = 800
-  val samples = 100
+  val samples = 1000
 
   val origin = Vec3(278, 278, -800)
   val target = Vec3(278, 278, 0)
