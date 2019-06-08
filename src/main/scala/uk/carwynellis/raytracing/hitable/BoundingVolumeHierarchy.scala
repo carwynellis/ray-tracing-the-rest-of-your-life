@@ -1,11 +1,13 @@
 package uk.carwynellis.raytracing.hitable
 import uk.carwynellis.raytracing.{AxisAlignedBoundingBox, HitRecord, Random, Ray}
 
-case class BoundingVolumeHierarchy(left: Option[Hitable],
-                                  right: Option[Hitable],
-                                  box: Option[AxisAlignedBoundingBox],
-                                  time0: Double,
-                                  time1: Double) extends Hitable {
+case class BoundingVolumeHierarchy(
+  left: Option[Hitable],
+  right: Option[Hitable],
+  box: Option[AxisAlignedBoundingBox],
+  time0: Double,
+  time1: Double
+) extends Hitable {
 
   /**
     * Compute whether a ray hits any of the hitables within the BVH.

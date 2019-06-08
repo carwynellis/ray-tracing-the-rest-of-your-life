@@ -13,8 +13,13 @@ object Render extends App {
 
   println(s"Rendering scene to $filename")
 
-  val scene = Scene.cornellBoxScene(time0, time1, width.toDouble / height.toDouble)
+  val scene = Scene.cornellBoxScene
+    .withStartTime(time0)
+    .withEndTime(time1)
+    .withAspectRatio(width.toDouble / height.toDouble)
+
   val renderer = Renderer(scene, width, height, samples)
+
   val imageWriter = ImageWriter(width, height, filename)
 
   renderer.renderScenePar().foreach(imageWriter.writePixel)

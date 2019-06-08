@@ -7,10 +7,27 @@ import uk.carwynellis.raytracing.hitable.transform.FlipNormals.HitableToFlipNorm
 import uk.carwynellis.raytracing.hitable.transform.{RotateY, Translate}
 
 case class Scene(
-  world: BoundingVolumeHierarchy,
+  private val objects: HitableList,
   raySources: HitableList,
-  camera: Camera
-)
+  camera: Camera,
+  time0: Double = 0.0,
+  time1: Double = 0.0,
+) {
+
+  def withAspectRatio(a: Double) = this.copy(camera = camera.copy(aspectRatio = a))
+
+  def withStartTime(t: Double) = this.copy(
+    time0 = t,
+    camera = camera.copy(time0 = t))
+
+  def withEndTime(t: Double) = this.copy(
+    time1 = t,
+    camera = camera.copy(time1 = t)
+  )
+
+  def world = BoundingVolumeHierarchy.fromHitables(objects.hitables, time0, time1)
+
+}
 
 object Scene {
 
@@ -50,57 +67,40 @@ object Scene {
     XYRectangle(3, 5, 1, 3, -2, DiffuseLight(ConstantTexture(Vec3(1, 1, 1))))
   ))
 
-  val cornellBox: HitableList = {
+  val cornellBoxScene = {
     val red = Lambertian(ConstantTexture(Vec3(0.65, 0.05, 0.05)))
     val white = Lambertian(ConstantTexture(Vec3(0.73, 0.73, 0.73)))
     val green = Lambertian(ConstantTexture(Vec3(0.12, 0.45, 0.15)))
     val light = DiffuseLight(ConstantTexture(Vec3(15, 15, 15)))
 
-    HitableList(List(
-      YZRectangle(0, 555, 0, 555, 555, green).flipNormals,
-      YZRectangle(0, 555, 0, 555, 0, red),
-      XZRectangle(213, 343, 227, 332, 554, light),
-      XZRectangle(0, 555, 0, 555, 555, white).flipNormals,
-      XZRectangle(0, 555, 0, 555, 0, white),
-      XYRectangle(0, 555, 0, 555, 555, white).flipNormals,
-      Sphere(Vec3(190, 90, 190), 90, Dielectric(1.5)),
-      Translate(RotateY(Box(Vec3(0, 0, 0), Vec3(165, 330, 165), Dielectric(1.5)), 15), Vec3(265, 0, 295)),
-    ))
-  }
-
-  def cornellBoxScene(t0: Double, t1: Double, aspectRatio: Double) = {
-    val red = Lambertian(ConstantTexture(Vec3(0.65, 0.05, 0.05)))
-    val white = Lambertian(ConstantTexture(Vec3(0.73, 0.73, 0.73)))
-    val green = Lambertian(ConstantTexture(Vec3(0.12, 0.45, 0.15)))
-    val light = DiffuseLight(ConstantTexture(Vec3(15, 15, 15)))
+    val lightSource = XZRectangle(213, 343, 227, 332, 554, light)
+    val glassSphere = Sphere(Vec3(190, 90, 190), 90, Dielectric(1.5))
 
     val objects = List(
+      lightSource,
       YZRectangle(0, 555, 0, 555, 555, green).flipNormals,
       YZRectangle(0, 555, 0, 555, 0, red),
-      XZRectangle(213, 343, 227, 332, 554, light),
       XZRectangle(0, 555, 0, 555, 555, white).flipNormals,
       XZRectangle(0, 555, 0, 555, 0, white),
       XYRectangle(0, 555, 0, 555, 555, white).flipNormals,
-      Sphere(Vec3(190, 90, 190), 90, Dielectric(1.5)),
+      glassSphere,
       Translate(RotateY(Box(Vec3(0, 0, 0), Vec3(165, 330, 165), Dielectric(1.5)), 15), Vec3(265, 0, 295)),
     )
 
     Scene(
-      world = BoundingVolumeHierarchy.fromHitables(objects, t0, t1),
+      objects = HitableList(objects),
       raySources = HitableList(List(
-        XZRectangle(213, 343, 227, 332, 554, Lambertian(ConstantTexture(Vec3(0, 0, 0)))),
-        Sphere(Vec3(190, 90, 190), 90, Lambertian(ConstantTexture(Vec3(0, 0, 0))))
+        lightSource,
+        glassSphere,
       )),
       camera = Camera(
         origin = Vec3(278, 278, -800),
         target = Vec3(278, 278, 0),
         upVector = Vec3(0, 1, 0),
         verticalFieldOfView = 40,
-        aspectRatio = aspectRatio,
+        aspectRatio = 1,
         aperture = 0.0,
         focusDistance = 10,
-        time0 = t0,
-        time1 = t1
       )
     )
   }

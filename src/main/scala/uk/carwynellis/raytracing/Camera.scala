@@ -13,15 +13,17 @@ import scala.annotation.tailrec
   * @param time0 start time for motion blur handling, analagous to shutter open time
   * @param time1 end time for motion blur handling, analagous to shutter close time
   */
-class Camera(origin: Vec3,
-             target: Vec3,
-             upVector: Vec3,
-             verticalFieldOfView: Double,
-             aspectRatio: Double,
-             aperture: Double,
-             focusDistance: Double,
-             time0: Double,
-             time1: Double) {
+case class Camera(
+  origin: Vec3,
+  target: Vec3,
+  upVector: Vec3,
+  verticalFieldOfView: Double,
+  aspectRatio: Double,
+  aperture: Double,
+  focusDistance: Double,
+  time0: Double,
+  time1: Double
+) {
 
   private val lensRadius = aperture / 2.0
 
@@ -77,7 +79,7 @@ object Camera {
             aspectRatio: Double,
             aperture: Double,
             focusDistance: Double,
-            time0: Double,
-            time1: Double) =
+            time0: Double = 0.0,
+            time1: Double = 0.0) =
     new Camera(origin, target, upVector, verticalFieldOfView, aspectRatio, aperture, focusDistance, time0, time1)
 }
