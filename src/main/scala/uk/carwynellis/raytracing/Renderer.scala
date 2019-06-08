@@ -2,12 +2,16 @@ package uk.carwynellis.raytracing
 
 import java.time.Duration
 
-import uk.carwynellis.raytracing.hitable.{Hitable, HitableList, Sphere, XZRectangle}
-import uk.carwynellis.raytracing.material.{Dielectric, Lambertian, ScatterRecord}
+import uk.carwynellis.raytracing.hitable.Hitable
+import uk.carwynellis.raytracing.material.ScatterRecord
 import uk.carwynellis.raytracing.pdf.{CombinedPdf, HitablePdf}
-import uk.carwynellis.raytracing.texture.ConstantTexture
 
-class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples: Int) {
+class Renderer(
+  scene: Scene,
+  width: Int,
+  height: Int,
+  samples: Int
+) {
 
   // When rendering some rays may may include a floating point error preventing them from being treated as 0.
   // We increase the minimum value we accept slightly which yields a smoother image without visible noise.
@@ -17,26 +21,19 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
 
   val MaximumRecursionDepth = 50
 
-  // TODO - these are defined here temporarily so we can sample a given shape
-  //      - needs a refactor to allow this to be passed in
-  val CornellLightShape = XZRectangle(213, 343, 227, 332, 554, Lambertian(ConstantTexture(Vec3(0, 0, 0))))
-  val CornellSphere = Sphere(Vec3(190, 90, 190), 90, Lambertian(ConstantTexture(Vec3(0, 0, 0))))
-  val CornellLights = HitableList(List(CornellLightShape, CornellSphere))
-
   /**
     * Compute the color for a given ray.
     *
     * @param r
     * @param world
-    * @param lightShape
+    * @param raySources
     * @param depth
     * @return
     */
   def color(
     r: Ray,
     world: Hitable,
-    // TODO - this is a horrible hack to just get the cornell box working - need to revisit how scenes are defined
-    lightShape: Hitable = CornellLightShape,
+    raySources: Hitable,
     depth: Int
   ): Vec3 = {
     world.hit(r, ImageSmoothingLimit, Double.MaxValue) match {
@@ -44,13 +41,13 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
         val emitted = hit.material.emitted(r, hit, hit.u, hit.v, hit.p)
         hit.material.scatter(r, hit) match {
           case Some(ScatterRecord(ray, true, attenuation, None)) if depth < MaximumRecursionDepth =>
-            attenuation * color(ray, world, lightShape, depth + 1)
-          case Some(ScatterRecord(ray, isSpecular, attenuation, Some(pdf))) if depth < MaximumRecursionDepth =>
-            val lightPdf = HitablePdf(lightShape, hit.p)
+            attenuation * color(ray, world, raySources, depth + 1)
+          case Some(ScatterRecord(_, _, attenuation, Some(pdf))) if depth < MaximumRecursionDepth =>
+            val lightPdf = HitablePdf(raySources, hit.p)
             val combinedPdf = CombinedPdf(lightPdf, pdf)
             val scattered = Ray(hit.p, combinedPdf.generate, r.time)
             val pdfValue = combinedPdf.value(scattered.direction)
-            emitted + attenuation * hit.material.scatteringPdf(r, hit, scattered) * color(scattered, world, lightShape, depth + 1) / pdfValue
+            emitted + attenuation * hit.material.scatteringPdf(r, hit, scattered) * color(scattered, world, raySources, depth + 1) / pdfValue
           case _ => emitted
         }
       // If the ray hits nothing draw return black.
@@ -67,13 +64,12 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
     * @param y
     * @return
     */
-  // TODO - needs a refactor - this has been changed to allow the sphere to be sampled directly.
   def renderPixel(x: Int, y: Int): Pixel = {
     val result = (0 until samples).map { _ =>
       val xR = (x.toDouble + Random.double) / width.toDouble
       val yR = (y.toDouble + Random.double) / height.toDouble
-      val ray = camera.getRay(xR, yR)
-      color(r = ray, world = scene, depth = 0, lightShape = CornellLights)
+      val ray = scene.camera.getRay(xR, yR)
+      color(r = ray, world = scene.world, depth = 0, raySources = scene.raySources)
     }.reduce(_ + _) / samples
     result.toPixel
   }
@@ -137,6 +133,6 @@ class Renderer(camera: Camera, scene: Hitable, width: Int, height: Int, samples:
 }
 
 object Renderer {
-  def apply(camera: Camera, scene: Hitable, width: Int, height: Int, samples: Int) =
-    new Renderer(camera, scene, width, height, samples)
+  def apply(scene: Scene, width: Int, height: Int, samples: Int) =
+    new Renderer(scene, width, height, samples)
 }
