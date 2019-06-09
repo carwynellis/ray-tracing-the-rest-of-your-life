@@ -53,11 +53,6 @@ object Scene {
       camera = Camera(
         origin = Vec3(13, 2, 3),
         target = Vec3(0, 0, 0),
-        upVector = Vec3(0, 1, 0),
-        verticalFieldOfView = 40,
-        aspectRatio = 1,
-        aperture = 0.0,
-        focusDistance = 10,
       )
     )
   }
@@ -91,11 +86,6 @@ object Scene {
       camera = Camera(
         origin = Vec3(278, 278, -800),
         target = Vec3(278, 278, 0),
-        upVector = Vec3(0, 1, 0),
-        verticalFieldOfView = 40,
-        aspectRatio = 1,
-        aperture = 0.0,
-        focusDistance = 10,
       )
     )
   }

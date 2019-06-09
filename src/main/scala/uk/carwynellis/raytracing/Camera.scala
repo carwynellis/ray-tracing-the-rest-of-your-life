@@ -74,11 +74,11 @@ case class Camera(
 object Camera {
   def apply(origin: Vec3,
             target: Vec3,
-            upVector: Vec3,
-            verticalFieldOfView: Double,
-            aspectRatio: Double,
-            aperture: Double,
-            focusDistance: Double,
+            upVector: Vec3 = Vec3(0, 1, 0),
+            verticalFieldOfView: Double = 40.0,
+            aspectRatio: Double = 1.0,
+            aperture: Double = 0.0,
+            focusDistance: Double = 10.0,
             time0: Double = 0.0,
             time1: Double = 0.0) =
     new Camera(origin, target, upVector, verticalFieldOfView, aspectRatio, aperture, focusDistance, time0, time1)
