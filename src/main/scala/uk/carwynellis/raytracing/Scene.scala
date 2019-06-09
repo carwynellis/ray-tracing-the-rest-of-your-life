@@ -31,18 +31,6 @@ case class Scene(
 
 object Scene {
 
-  val staticScene = HitableList(List(
-    Sphere(Vec3(0, 0, -1), 0.5, Lambertian(ConstantTexture(Vec3(0.5, 0.5, 0.6)))),
-    Sphere(Vec3(0, -100.5, -1), 100, Lambertian(ConstantTexture(Vec3(0.8, 0.8, 0.0)))),
-    Sphere(Vec3(1, 0, -1), 0.5, Metal(ConstantTexture(Vec3(0.8, 0.6, 0.2)), 0.3)),
-    Sphere(Vec3(-1, 0, -1), -0.5, Dielectric(1.5))
-  ))
-
-  val twoPerlinSpheres = HitableList(List(
-    Sphere(Vec3(0, -1000, 0), 1000, Lambertian(NoiseTexture(1))),
-    Sphere(Vec3(0, 2, 0), 2, Lambertian(NoiseTexture(20))),
-  ))
-
   private val earthTexturePath = "/Users/carwyn/Downloads/earthmap.jpg"
 
   val earthTexture: ImageTexture = ImageTexture.fromPath(earthTexturePath).fold(
@@ -50,22 +38,29 @@ object Scene {
     identity
   )
 
-  val perlinAndImageSpheres = HitableList(List(
-    Sphere(Vec3(0, -1000, 0), 1000, Lambertian(NoiseTexture(1))),
-    Sphere(Vec3(0, 2, 0), 2, Lambertian(earthTexture))
-  ))
+  val simpleLightScene = {
+    val lightSphere = Sphere(Vec3(0, 0, 0), 2, DiffuseLight(ConstantTexture(Vec3(15, 15, 15))))
+    val lightRectangle = XYRectangle(3, 5, 1, 3, -2, DiffuseLight(ConstantTexture(Vec3(15, 15, 15))))
 
-  val perlinAndLight = HitableList(List(
-    Sphere(Vec3(0, -1000, 0), 1000, Lambertian(NoiseTexture(1))),
-    Sphere(Vec3(0, 2, 0), 2, DiffuseLight(ConstantTexture(Vec3(4, 4, 4))))
-  ))
-
-  val simpleLightScene = HitableList(List(
-    Sphere(Vec3(0, -1000, 0), 1000, Lambertian(NoiseTexture(4))),
-    Sphere(Vec3(0, 2, 0), 2, Lambertian(NoiseTexture(4))),
-    Sphere(Vec3(0, 7, 0), 2, DiffuseLight(ConstantTexture(Vec3(1, 1, 1)))),
-    XYRectangle(3, 5, 1, 3, -2, DiffuseLight(ConstantTexture(Vec3(1, 1, 1))))
-  ))
+    Scene(
+      objects = HitableList(List(
+        Sphere(Vec3(0, -1000, 0), 1000, Lambertian(NoiseTexture(4))),
+        Sphere(Vec3(0, 2, 0), 2, Lambertian(NoiseTexture(4))),
+        lightSphere,
+        lightRectangle,
+      )),
+      raySources = HitableList(List(lightRectangle, lightSphere)),
+      camera = Camera(
+        origin = Vec3(13, 2, 3),
+        target = Vec3(0, 0, 0),
+        upVector = Vec3(0, 1, 0),
+        verticalFieldOfView = 40,
+        aspectRatio = 1,
+        aperture = 0.0,
+        focusDistance = 10,
+      )
+    )
+  }
 
   val cornellBoxScene = {
     val red = Lambertian(ConstantTexture(Vec3(0.65, 0.05, 0.05)))
