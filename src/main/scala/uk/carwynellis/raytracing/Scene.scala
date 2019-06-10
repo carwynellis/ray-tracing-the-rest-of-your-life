@@ -40,7 +40,7 @@ object Scene {
 
   val simpleLightScene = {
     val lightSphere = Sphere(Vec3(4, 0.5, 2.5), 0.5, DiffuseLight(ConstantTexture(Vec3(15, 15, 15))))
-    val lightRectangle = XYRectangle(-40, 10, 1, 6, 5, DiffuseLight(ConstantTexture(Vec3(15, 15, 15))))
+    val lightRectangle = XYRectangle(-10, 0, 0, 2, 5, DiffuseLight(ConstantTexture(Vec3(15, 15, 15))))
 
     Scene(
       objects = HitableList(List(
@@ -49,7 +49,7 @@ object Scene {
         lightSphere,
         lightRectangle,
       )),
-      raySources = HitableList(List(lightRectangle, lightSphere)),
+      raySources = HitableList(List(lightSphere, lightRectangle)),
       camera = Camera(
         origin = Vec3(13, 2, 3),
         target = Vec3(0, 0, 0),
