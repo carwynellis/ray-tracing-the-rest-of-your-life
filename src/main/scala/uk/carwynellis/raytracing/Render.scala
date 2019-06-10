@@ -4,7 +4,7 @@ object Render extends App {
 
   val width = 1200
   val height = 800
-  val samples = 100
+  val samples = 1
 
   val time0 = 0.0
   val time1 = 1.0
