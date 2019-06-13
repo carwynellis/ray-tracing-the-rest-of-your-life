@@ -13,7 +13,7 @@ object Render extends App {
 
   println(s"Rendering scene to $filename")
 
-  val scene = Scene.simpleLightScene
+  val scene = Scene.cornellSmokeScene
     .withStartTime(time0)
     .withEndTime(time1)
     .withAspectRatio(width.toDouble / height.toDouble)
