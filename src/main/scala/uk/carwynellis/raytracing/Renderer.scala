@@ -5,8 +5,8 @@ import java.time.Duration
 import uk.carwynellis.raytracing.hitable.Hitable
 import uk.carwynellis.raytracing.material.ScatterRecord
 import uk.carwynellis.raytracing.pdf.{CombinedPdf, HitablePdf}
-
-import scala.collection.immutable
+// TODO - standardize on Scala Duration....
+import scala.concurrent.duration.{Duration => ScalaDuration, MILLISECONDS}
 
 class Renderer(
   scene: Scene,
@@ -139,16 +139,18 @@ class Renderer(
   // to wildly inaccurate estimates, particularly if the complexity of the scene increases as we progress down the
   // image.
   def renderScenePerSceneSamples(): Seq[Pixel] = {
+    print(s"Estimated time remaining: UNKNOWN  - elapsed time 00:00:00")
     val startTime = System.currentTimeMillis()
     val sampleData = (1 to samples).map { s =>
-      println(s"Rendering sample $s of $samples")
       val data = (height-1 to 0 by -1).par.flatMap { j: Int =>
-       (0 until width).map(renderPixel(_, j, 1))
-      }
+        (0 until width).map(renderPixel(_, j, 1))
+      }.seq
       val elapsed = System.currentTimeMillis() - startTime
       val timePerSample = elapsed / s
-      println(s"Time per sample: $timePerSample ms")
-      data.seq
+      val estimatedTimeRemaining = (samples - s) * timePerSample
+      val eta = millisecondsToTimeStamp(estimatedTimeRemaining)
+      print(s"\rEstimated time remaining: $eta - elapsed time ${millisecondsToTimeStamp(elapsed)}")
+      data
     }
 
     val combined = sampleData.reduce { (a: Seq[Pixel], b: Seq[Pixel]) => a.zip(b).map {
@@ -156,6 +158,11 @@ class Renderer(
     } }
 
     combined
+  }
+
+  private def millisecondsToTimeStamp(ms: Long): String = {
+    val d = ScalaDuration(ms, MILLISECONDS)
+    f"${d.toHours}%02d:${d.toMinutes}%02d:${d.toSeconds}%02d"
   }
 
 }
