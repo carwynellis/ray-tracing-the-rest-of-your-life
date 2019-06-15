@@ -162,7 +162,7 @@ class Renderer(
 
   private def millisecondsToTimeStamp(ms: Long): String = {
     val d = ScalaDuration(ms, MILLISECONDS)
-    f"${d.toHours}%02d:${d.toMinutes}%02d:${d.toSeconds}%02d"
+    f"${d.toHours}%02d:${d.toMinutes % 60}%02d:${d.toSeconds % 60}%02d"
   }
 
 }
