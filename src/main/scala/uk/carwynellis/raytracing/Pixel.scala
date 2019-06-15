@@ -1,6 +1,20 @@
 package uk.carwynellis.raytracing
 
-case class Pixel(r: Int, g: Int, b: Int)
+final case class Pixel(r: Int, g: Int, b: Int) {
+
+  def +(that: Pixel) = Pixel(
+    r + that.r,
+    g + that.g,
+    b + that.b
+  )
+
+  def /(n: Double) = Pixel(
+    (r / n).toInt,
+    (g / n).toInt,
+    (b / n).toInt,
+  )
+
+}
 
 object Pixel {
 

@@ -6,6 +6,8 @@ import uk.carwynellis.raytracing.hitable.Hitable
 import uk.carwynellis.raytracing.material.ScatterRecord
 import uk.carwynellis.raytracing.pdf.{CombinedPdf, HitablePdf}
 
+import scala.collection.immutable
+
 class Renderer(
   scene: Scene,
   width: Int,
@@ -64,13 +66,15 @@ class Renderer(
     * @param y
     * @return
     */
-  def renderPixel(x: Int, y: Int): Pixel = {
-    val result = (0 until samples).map { _ =>
+  // TOOD - temporary hack here to allow the number of samples to be set to 1 so I can test full image sampling rather
+  //        then per pixel sampling.
+  def renderPixel(x: Int, y: Int, _samples: Int = samples): Pixel = {
+    val result = (0 until _samples).map { _ =>
       val xR = (x.toDouble + Random.double) / width.toDouble
       val yR = (y.toDouble + Random.double) / height.toDouble
       val ray = scene.camera.getRay(xR, yR)
       color(r = ray, world = scene.world, depth = 0, raySources = scene.raySources)
-    }.reduce(_ + _) / samples
+    }.reduce(_ + _) / _samples
     result.toPixel
   }
 
@@ -128,6 +132,30 @@ class Renderer(
       elapsedDuration.toMinutes % 60,
       elapsedDuration.getSeconds % 60
     )
+  }
+
+  // Trying out a different approach that renders the entire scene per sample.
+  // This should lead to more accurate time estimates since at the moment we sample each pixel n times which can lead
+  // to wildly inaccurate estimates, particularly if the complexity of the scene increases as we progress down the
+  // image.
+  def renderScenePerSceneSamples(): Seq[Pixel] = {
+    val startTime = System.currentTimeMillis()
+    val sampleData = (1 to samples).map { s =>
+      println(s"Rendering sample $s of $samples")
+      val data = (height-1 to 0 by -1).par.flatMap { j: Int =>
+       (0 until width).map(renderPixel(_, j, 1))
+      }
+      val elapsed = System.currentTimeMillis() - startTime
+      val timePerSample = elapsed / s
+      println(s"Time per sample: $timePerSample ms")
+      data.seq
+    }
+
+    val combined = sampleData.reduce { (a: Seq[Pixel], b: Seq[Pixel]) => a.zip(b).map {
+      case (x, y) => (x + y) / 2
+    } }
+
+    combined
   }
 
 }
