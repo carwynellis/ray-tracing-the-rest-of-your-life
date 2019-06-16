@@ -4,7 +4,7 @@ object Render extends App {
 
   val width = 1200
   val height = 800
-  val samples = 10
+  val samples = 1000
 
   val time0 = 0.0
   val time1 = 1.0
@@ -22,8 +22,8 @@ object Render extends App {
 
   val imageWriter = ImageWriter(width, height, filename)
 
-  renderer.renderScenePar().foreach(imageWriter.writePixel)
-//  renderer.renderScenePerSceneSamples().foreach(imageWriter.writePixel)
+//  renderer.renderScenePar().foreach(imageWriter.writePixel)
+  renderer.renderScenePerSceneSamples().foreach(imageWriter.writePixel)
 
   imageWriter.close()
 

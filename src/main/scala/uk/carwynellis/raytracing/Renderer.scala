@@ -118,29 +118,30 @@ class Renderer(
     *
     * This has the advantage of generating a more accurate estimated time remaining as the render progresses.
     *
-    * TODO - this approach is a little slower since it generates more objects and thus more GC activity...
     * @return
     */
   def renderScenePerSceneSamples(): Seq[Pixel] = {
     @tailrec
-    def loop(acc: Seq[Vec3], sampleIndex: Int = 1, startTime: Long = System.currentTimeMillis()): Seq[Vec3] = {
+    def loop(acc: IndexedSeq[Vec3], sampleIndex: Int = 1, startTime: Long = System.currentTimeMillis()): Seq[Vec3] = {
       if (sampleIndex > samples) acc
       else {
         val data = (height - 1 to 0 by -1).par.flatMap { j: Int =>
-          (0 until width).map(renderPixelNoSample(_, j))
-        }.seq
-
-        val updated = acc.zip(data).map { case (x, y) => x + y }
+          val pos = height - j - 1
+          (0 until width).map { i =>
+            val index = pos +  (pos * (width - 1)) + i
+            renderPixelNoSample(i, j) + acc(index)
+          }
+        }.toIndexedSeq
 
         updateProgress(sampleIndex, samples, startTime)
 
-        loop(updated, sampleIndex + 1, startTime)
+        loop(data, sampleIndex + 1, startTime)
       }
     }
 
     showInitialProgress()
 
-    val data = loop(Seq.fill(width * height)(Vec3(0, 0, 0)))
+    val data = loop(IndexedSeq.fill(width * height)(Vec3(0, 0, 0)))
 
     data.map(_ / samples).map(_.toPixel)
   }
