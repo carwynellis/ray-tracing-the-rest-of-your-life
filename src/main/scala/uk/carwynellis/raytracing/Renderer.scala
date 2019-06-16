@@ -5,6 +5,8 @@ import java.time.Duration
 import uk.carwynellis.raytracing.hitable.Hitable
 import uk.carwynellis.raytracing.material.ScatterRecord
 import uk.carwynellis.raytracing.pdf.{CombinedPdf, HitablePdf}
+
+import scala.annotation.tailrec
 // TODO - standardize on Scala Duration....
 import scala.concurrent.duration.{Duration => ScalaDuration, MILLISECONDS}
 
@@ -66,16 +68,21 @@ class Renderer(
     * @param y
     * @return
     */
-  // TOOD - temporary hack here to allow the number of samples to be set to 1 so I can test full image sampling rather
-  //        then per pixel sampling.
-  def renderPixel(x: Int, y: Int, _samples: Int = samples): Pixel = {
-    val result = (0 until _samples).map { _ =>
+  def renderPixel(x: Int, y: Int): Pixel = {
+    val result: Vec3 = (0 until samples).map { _ =>
       val xR = (x.toDouble + Random.double) / width.toDouble
       val yR = (y.toDouble + Random.double) / height.toDouble
       val ray = scene.camera.getRay(xR, yR)
       color(r = ray, world = scene.world, depth = 0, raySources = scene.raySources)
-    }.reduce(_ + _) / _samples
+    }.reduce(_ + _) / samples
     result.toPixel
+  }
+
+  def renderPixelNoSample(x: Int, y: Int): Vec3 = {
+    val xR = (x.toDouble + Random.double) / width.toDouble
+    val yR = (y.toDouble + Random.double) / height.toDouble
+    val ray = scene.camera.getRay(xR, yR)
+    color(r = ray, world = scene.world, depth = 0, raySources = scene.raySources)
   }
 
   /**
@@ -139,25 +146,32 @@ class Renderer(
   // to wildly inaccurate estimates, particularly if the complexity of the scene increases as we progress down the
   // image.
   def renderScenePerSceneSamples(): Seq[Pixel] = {
-    print(s"Estimated time remaining: UNKNOWN  - elapsed time 00:00:00")
-    val startTime = System.currentTimeMillis()
-    val sampleData = (1 to samples).map { s =>
-      val data = (height-1 to 0 by -1).par.flatMap { j: Int =>
-        (0 until width).map(renderPixel(_, j, 1))
-      }.seq
-      val elapsed = System.currentTimeMillis() - startTime
-      val timePerSample = elapsed / s
-      val estimatedTimeRemaining = (samples - s) * timePerSample
-      val eta = millisecondsToTimeStamp(estimatedTimeRemaining)
-      print(s"\rEstimated time remaining: $eta - elapsed time ${millisecondsToTimeStamp(elapsed)}")
-      data
+    @tailrec
+    def loop(acc: Seq[Vec3], sampleIndex: Int = 1, startTime: Long = System.currentTimeMillis()): Seq[Vec3] = {
+      if (sampleIndex > samples) acc
+      else {
+        val data = (height - 1 to 0 by -1).par.flatMap { j: Int =>
+          (0 until width).map(renderPixelNoSample(_, j))
+        }.seq
+        val updated = acc.zip(data).map { case (x, y) => x + y }
+
+        val elapsed = System.currentTimeMillis() - startTime
+        val timePerSample = elapsed / sampleIndex
+        val estimatedTimeRemaining = (samples - sampleIndex) * timePerSample
+        val eta = millisecondsToTimeStamp(estimatedTimeRemaining)
+        val percentComplete = ((sampleIndex.toDouble / samples.toDouble) * 100).toInt
+        val literalPercent = "%"
+        print(f"\r$percentComplete% 3d$literalPercent complete - Estimated time remaining: $eta - elapsed time ${millisecondsToTimeStamp(elapsed)} ")
+
+        loop(updated, sampleIndex + 1, startTime)
+      }
     }
 
-    val combined = sampleData.reduce { (a: Seq[Pixel], b: Seq[Pixel]) => a.zip(b).map {
-      case (x, y) => (x + y) / 2
-    } }
+    print(s"  0% complete - Estimated time remaining: --:--:-- - elapsed time 00:00:00 ")
 
-    combined
+    val data = loop(Seq.fill(width * height)(Vec3(0, 0, 0)))
+
+    data.map(_ / samples).map(_.toPixel)
   }
 
   private def millisecondsToTimeStamp(ms: Long): String = {
