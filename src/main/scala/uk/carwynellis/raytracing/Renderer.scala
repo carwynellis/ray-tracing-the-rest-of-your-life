@@ -1,14 +1,11 @@
 package uk.carwynellis.raytracing
 
-import java.time.Duration
-
 import uk.carwynellis.raytracing.hitable.Hitable
 import uk.carwynellis.raytracing.material.ScatterRecord
 import uk.carwynellis.raytracing.pdf.{CombinedPdf, HitablePdf}
 
 import scala.annotation.tailrec
-// TODO - standardize on Scala Duration....
-import scala.concurrent.duration.{Duration => ScalaDuration, MILLISECONDS}
+import scala.concurrent.duration.{Duration, MILLISECONDS}
 
 class Renderer(
   scene: Scene,
@@ -93,7 +90,7 @@ class Renderer(
   def renderScene(): Seq[Pixel] = {
     val startTime = System.currentTimeMillis()
     (height-1 to 0 by -1).flatMap { j: Int =>
-      showProgress(j, startTime)
+      updateProgress((height - j) + 1, height, startTime)
       (0 until width).map(renderPixel(_, j))
     }
   }
@@ -110,41 +107,20 @@ class Renderer(
     @volatile var pos = height - 1
     (height-1 to 0 by -1).par.flatMap { j: Int =>
       pos -= 1
-      showProgress(pos, startTime)
+      updateProgress((height - pos) + 1, height, startTime)
       (0 until width).map(renderPixel(_, j))
     }.seq
   }
 
-  // Basic progress indication, updated for each horizontal line of the image.
-  // Added rather crude remaining time estimation which needs work.
-  // TODO - this is scanline based so suffers when we encounter a more complex part of the scene. Consider rendering a
-  //        whole scene sample and using this for the basis of parallelisation and estimation - should yield more
-  //        accurate estimates.
-  private def showProgress(hPos: Int, start: Long): Unit = {
-    val durationSeconds = (System.currentTimeMillis() - start) / 1000
-    val percentComplete = 100 - ((hPos.toDouble / height) * 100)
-    val remainingDuration = {
-      val durationUnit = durationSeconds / percentComplete
-      Duration.ofSeconds((durationUnit * (100 - percentComplete)).toLong)
-    }
-    val elapsedDuration = Duration.ofSeconds(durationSeconds)
-    printf(
-      "\r% 4d%s complete - estimated time remaining %02d:%02d:%02d - elapsed %02d:%02d:%02d",
-      percentComplete.toInt,
-      "%",
-      remainingDuration.toHours,
-      remainingDuration.toMinutes % 60,
-      remainingDuration.getSeconds % 60,
-      elapsedDuration.toHours,
-      elapsedDuration.toMinutes % 60,
-      elapsedDuration.getSeconds % 60
-    )
-  }
-
-  // Trying out a different approach that renders the entire scene per sample.
-  // This should lead to more accurate time estimates since at the moment we sample each pixel n times which can lead
-  // to wildly inaccurate estimates, particularly if the complexity of the scene increases as we progress down the
-  // image.
+  /**
+    * Renders the scene by sampling the entire scene each time, unlike the scanline based approached used by the other
+    * render methods.
+    *
+    * This has the advantage of generating a more accurate estimated time remaining as the render progresses.
+    *
+    * TODO - this approach is a little slower since it generates more objects and thus more GC activity...
+    * @return
+    */
   def renderScenePerSceneSamples(): Seq[Pixel] = {
     @tailrec
     def loop(acc: Seq[Vec3], sampleIndex: Int = 1, startTime: Long = System.currentTimeMillis()): Seq[Vec3] = {
@@ -153,21 +129,16 @@ class Renderer(
         val data = (height - 1 to 0 by -1).par.flatMap { j: Int =>
           (0 until width).map(renderPixelNoSample(_, j))
         }.seq
+
         val updated = acc.zip(data).map { case (x, y) => x + y }
 
-        val elapsed = System.currentTimeMillis() - startTime
-        val timePerSample = elapsed / sampleIndex
-        val estimatedTimeRemaining = (samples - sampleIndex) * timePerSample
-        val eta = millisecondsToTimeStamp(estimatedTimeRemaining)
-        val percentComplete = ((sampleIndex.toDouble / samples.toDouble) * 100).toInt
-        val literalPercent = "%"
-        print(f"\r$percentComplete% 3d$literalPercent complete - Estimated time remaining: $eta - elapsed time ${millisecondsToTimeStamp(elapsed)} ")
+        updateProgress(sampleIndex, samples, startTime)
 
         loop(updated, sampleIndex + 1, startTime)
       }
     }
 
-    print(s"  0% complete - Estimated time remaining: --:--:-- - elapsed time 00:00:00 ")
+    showInitialProgress()
 
     val data = loop(Seq.fill(width * height)(Vec3(0, 0, 0)))
 
@@ -175,9 +146,25 @@ class Renderer(
   }
 
   private def millisecondsToTimeStamp(ms: Long): String = {
-    val d = ScalaDuration(ms, MILLISECONDS)
+    val d = Duration(ms, MILLISECONDS)
     f"${d.toHours}%02d:${d.toMinutes % 60}%02d:${d.toSeconds % 60}%02d"
   }
+
+  private def updateProgress(unitsComplete: Int, totalUnits: Int, startTime: Long): Unit = {
+    val elapsedTime = System.currentTimeMillis()  - startTime
+    val timePerUnit = elapsedTime / unitsComplete
+    val estimatedTimeRemaining = (totalUnits - unitsComplete) * timePerUnit
+    val percentComplete = (unitsComplete.toDouble / totalUnits.toDouble) * 100
+
+    printf("\r% 3d%s complete - estimated time remaining %s - elapsed time %s ",
+      percentComplete.toInt,
+      "%",
+      millisecondsToTimeStamp(estimatedTimeRemaining),
+      millisecondsToTimeStamp(elapsedTime)
+    )
+  }
+
+  private def showInitialProgress() = updateProgress(1, Int.MaxValue, System.currentTimeMillis())
 
 }
 

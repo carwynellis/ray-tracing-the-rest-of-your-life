@@ -22,8 +22,8 @@ object Render extends App {
 
   val imageWriter = ImageWriter(width, height, filename)
 
-//  renderer.renderScenePar().foreach(imageWriter.writePixel)
-  renderer.renderScenePerSceneSamples().foreach(imageWriter.writePixel)
+  renderer.renderScenePar().foreach(imageWriter.writePixel)
+//  renderer.renderScenePerSceneSamples().foreach(imageWriter.writePixel)
 
   imageWriter.close()
 
