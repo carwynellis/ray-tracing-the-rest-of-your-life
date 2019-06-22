@@ -58,69 +58,20 @@ class Renderer(
   }
 
   /**
-    * Sample a number of randomly generated rays for the current pixel.
+    * Sample a single ray for a given pixel.
     *
-    * Higher sample counts yield a better quality image at the expense of longer render times.
     * @param x
     * @param y
     * @return
     */
-  def renderPixel(x: Int, y: Int): Pixel = {
-    val result: Vec3 = (0 until samples).map { _ =>
-      val xR = (x.toDouble + Random.double) / width.toDouble
-      val yR = (y.toDouble + Random.double) / height.toDouble
-      val ray = scene.camera.getRay(xR, yR)
-      color(r = ray, world = scene.world, depth = 0, raySources = scene.raySources)
-    }.reduce(_ + _) / samples
-    result.toPixel
-  }
-
-  def renderPixelNoSample(x: Int, y: Int): Vec3 = {
+  def renderPixel(x: Int, y: Int): Vec3 = {
     val xR = (x.toDouble + Random.double) / width.toDouble
     val yR = (y.toDouble + Random.double) / height.toDouble
     val ray = scene.camera.getRay(xR, yR)
     color(r = ray, world = scene.world, depth = 0, raySources = scene.raySources)
   }
 
-  /**
-    * Renders the entire scene returning a list of Pixels representing the rendered scene.
-    *
-    * @return
-    */
   def renderScene(): Seq[Pixel] = {
-    val startTime = System.currentTimeMillis()
-    (height-1 to 0 by -1).flatMap { j: Int =>
-      updateProgress((height - j) + 1, height, startTime)
-      (0 until width).map(renderPixel(_, j))
-    }
-  }
-
-  /**
-    * Renders the entire scene returning a list of Pixels representing the rendered scene.
-    *
-    * Uses ParSeq to parallelize the render.
-    *
-    * @return
-    */
-  def renderScenePar(): Seq[Pixel] = {
-    val startTime = System.currentTimeMillis()
-    @volatile var pos = height - 1
-    (height-1 to 0 by -1).par.flatMap { j: Int =>
-      pos -= 1
-      updateProgress((height - pos) + 1, height, startTime)
-      (0 until width).map(renderPixel(_, j))
-    }.seq
-  }
-
-  /**
-    * Renders the scene by sampling the entire scene each time, unlike the scanline based approached used by the other
-    * render methods.
-    *
-    * This has the advantage of generating a more accurate estimated time remaining as the render progresses.
-    *
-    * @return
-    */
-  def renderScenePerSceneSamples(): Seq[Pixel] = {
     @tailrec
     def loop(acc: IndexedSeq[Vec3], sampleIndex: Int = 1, startTime: Long = System.currentTimeMillis()): Seq[Vec3] = {
       if (sampleIndex > samples) acc
@@ -129,7 +80,7 @@ class Renderer(
           val pos = height - j - 1
           (0 until width).map { i =>
             val index = pos +  (pos * (width - 1)) + i
-            renderPixelNoSample(i, j) + acc(index)
+            renderPixel(i, j) + acc(index)
           }
         }.toIndexedSeq
 
