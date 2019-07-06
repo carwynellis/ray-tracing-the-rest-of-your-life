@@ -4,7 +4,7 @@ object Render extends App {
 
   val width = 1200
   val height = 800
-  val samples = 50
+  val samples = 10
 
   val time0 = 0.0
   val time1 = 1.0
@@ -13,7 +13,7 @@ object Render extends App {
 
   println(s"Rendering scene to $filename")
 
-  val scene = Scene.cornellBoxScene
+  val scene = Scene.finalScene
     .withStartTime(time0)
     .withEndTime(time1)
     .withAspectRatio(width.toDouble / height.toDouble)

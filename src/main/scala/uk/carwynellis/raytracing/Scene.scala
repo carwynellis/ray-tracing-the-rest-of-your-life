@@ -124,7 +124,7 @@ object Scene {
     )
   }
 
-  val finalScene: HitableList = {
+  val finalScene: Scene = {
     val boxCount = 20
     val sphereCount = 1000
 
@@ -154,9 +154,11 @@ object Scene {
 
     val centre = Vec3(400, 400, 200)
 
-    HitableList(List(
+    val lightSource = XZRectangle(123, 423, 147, 412, 554, light)
+
+    val objects = List(
       BoundingVolumeHierarchy.fromHitables(boxList.flatten.toList, 0, 1),
-      XZRectangle(123, 423, 147, 412, 554, light),
+      lightSource,
       MovingSphere(centre, centre+Vec3(30, 0, 0), 50, Lambertian(ConstantTexture(Vec3(0.7, 0.3, 0.1))), 0, 1),
       Sphere(Vec3(260, 150, 45), 50, Dielectric(1.5)),
       Sphere(Vec3(0, 150, 145), 50, Metal(ConstantTexture(Vec3(0.8, 0.8, 0.9)), 0.8)),
@@ -166,7 +168,16 @@ object Scene {
       Sphere(Vec3(400, 200, 400), 100, Lambertian(earthTexture)),
       Sphere(Vec3(220, 280, 300), 80, Lambertian(NoiseTexture(0.1))),
       Translate(RotateY(BoundingVolumeHierarchy.fromHitables(spheres.toList, 0, 1), 15), Vec3(-100, 270, 395))
-    ))
+    )
+
+    Scene(
+      objects = HitableList(objects),
+      raySources = HitableList(List(lightSource)),
+      camera = Camera(
+        origin = Vec3(478, 278, -600),
+        target = Vec3(278, 278, 0),
+      )
+    )
   }
 
 }
